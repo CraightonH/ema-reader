@@ -1,2 +1,6 @@
-config.py
+__pycache__/
+secret.py
 geckodriver.log
+*.png
+*.response
+*.example

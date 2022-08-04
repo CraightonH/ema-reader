@@ -15,7 +15,7 @@ All config variables are located in `config.py` with sections divided into separ
 A file `secrets.py` must be created with the following variables where a `.` denotes a dictionary:
 | Name     | Value                                     |
 |----------|-------------------------------------------|
-| `auth.username` | default: None<br/>Your login username |
-| `auth.password` | default: None<br/>Your login password |
-| `mqtt.hostname` | default: None<br/>Target mqtt host |
-| `mqtt.port` | default: None<br/>Target mqtt port |
+| `auth.username` | Your login username |
+| `auth.password` | Your login password |
+| `mqtt.hostname` | Target mqtt host |
+| `mqtt.port` | Target mqtt port |

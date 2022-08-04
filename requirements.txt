@@ -1,0 +1,3 @@
+selenium
+paho.mqtt
+requests

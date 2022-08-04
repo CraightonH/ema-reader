@@ -6,9 +6,14 @@ ENV CODEDIR=/ema-reader
 
 WORKDIR ${CODEDIR}
 
-RUN wget -q "https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux64.tar.gz" -O /tmp/geckodriver.tgz \
-    && tar zxf /tmp/geckodriver.tgz -C /usr/bin/ \
-    && rm /tmp/geckodriver.tgz 
+ADD "https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux64.tar.gz" /tmp/geckodriver.tgz
+
+RUN tar zxf /tmp/geckodriver.tgz -C /usr/bin/ \
+    && rm /tmp/geckodriver.tgz \
+    && useradd -m -r ${USER} \
+    && chown ${USER}:${USER} ${CODEDIR} \
+    && echo ${TZ} > /etc/timezone \
+    && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime
 
 RUN apt update && apt install -yq \
     firefox-esr
@@ -19,7 +24,7 @@ RUN python -m pip install -U \
     pip \
     setuptools
 
-COPY requirements.txt .
+COPY --chown=${USER} requirements.txt .
 
 RUN pip install --no-cache-dir --user -r requirements.txt
 

@@ -1,4 +1,5 @@
 __pycache__/
+.vscode/
 secret.py
 geckodriver.log
 *.png

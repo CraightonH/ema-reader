@@ -2,7 +2,7 @@ FROM python:3.9.13-slim
 ENV USER 'app'
 ENV UID '999'
 ENV TZ 'America/Denver'
-ENV CODEDIR=/ema-reader
+ENV CODEDIR=/app
 
 WORKDIR ${CODEDIR}
 

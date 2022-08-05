@@ -4,9 +4,24 @@ from selenium.webdriver.firefox.options import Options
 import paho.mqtt.publish as publish
 from requests import post
 import config
-import secret
+from types import SimpleNamespace
+secret = SimpleNamespace(auth= {}, mqtt={})
+try:
+    from secret import auth
+    secret.auth["username"] = auth["username"]
+    secret.auth["password"] = auth["password"]
+    from secret import mqtt
+    secret.mqtt["hostname"] = mqtt["hostname"]
+    secret.mqtt["port"] = mqtt["port"]
+except ImportError:
+    from os import environ
+    secret.auth["username"] = environ["AUTH_USERNAME"]
+    secret.auth["password"] = environ["AUTH_PASSWORD"]
+    secret.mqtt["hostname"] = environ["MQTT_HOSTNAME"]
+    secret.mqtt["port"] = environ["MQTT_PORT"]
 from time import sleep
 from sys import exit as sys_exit
+import traceback
 
 def setupDriver():
     options = Options()
@@ -57,11 +72,11 @@ def getProductionInfo(cookies):
 
 def publishProductionInfo(data):
     print("Publishing production info to " + secret.mqtt["hostname"] + ":" + str(secret.mqtt["port"]))
-    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_current_power"], payload=data[config.response_fields[config.mqtt["topic_current_power"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=secret.mqtt["port"], client_id=config.mqtt["client_id"])
-    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_energy_today"], payload=data[config.response_fields[config.mqtt["topic_energy_today"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=secret.mqtt["port"], client_id=config.mqtt["client_id"])
-    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_energy_lifetime"], payload=data[config.response_fields[config.mqtt["topic_energy_lifetime"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=secret.mqtt["port"], client_id=config.mqtt["client_id"])
-    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_monitor_status"], payload=data[config.response_fields[config.mqtt["topic_monitor_status"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=secret.mqtt["port"], client_id=config.mqtt["client_id"])
-    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_co2_saved"], payload=data[config.response_fields[config.mqtt["topic_co2_saved"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=secret.mqtt["port"], client_id=config.mqtt["client_id"])
+    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_current_power"], payload=data[config.response_fields[config.mqtt["topic_current_power"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"])
+    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_energy_today"], payload=data[config.response_fields[config.mqtt["topic_energy_today"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"])
+    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_energy_lifetime"], payload=data[config.response_fields[config.mqtt["topic_energy_lifetime"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"])
+    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_monitor_status"], payload=data[config.response_fields[config.mqtt["topic_monitor_status"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"])
+    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_co2_saved"], payload=data[config.response_fields[config.mqtt["topic_co2_saved"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"])
 
 if __name__ == "__main__":
     driver = setupDriver()
@@ -85,7 +100,9 @@ if __name__ == "__main__":
             else:
                 raise Exception("Failed login")
         except Exception as ex:
+            trace = traceback.format_exc()
             print("ERROR: " + str(type(ex)) + " " + str(ex))
+            print(trace)
         print("Initiating backoff. Attempts remaining: " + str(max_attempts - num_attempts) + ". Will retry in " + str(interval) + " seconds.")
         if num_attempts > 1:
             interval = interval * config.exception_handling["backoff_multiplier"]

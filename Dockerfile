@@ -15,7 +15,7 @@ RUN tar zxf /tmp/geckodriver.tgz -C /usr/bin/ \
     && echo ${TZ} > /etc/timezone \
     && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime
 
-RUN apt update && apt install -yq \
+RUN apt update && apt install --no-install-recommends --no-install-suggests -yq \
     firefox-esr
 
 USER ${USER}

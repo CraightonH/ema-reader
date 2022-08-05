@@ -5,6 +5,8 @@ import paho.mqtt.publish as publish
 from requests import post
 import config
 import secret
+from time import sleep
+from sys import exit as sys_exit
 
 def setupDriver():
     options = Options()
@@ -16,13 +18,15 @@ def logout(driver: webdriver.Firefox):
     top_menu = driver.find_element(By.CLASS_NAME, "div_menu2")
     anchors = top_menu.find_elements(By.TAG_NAME, "a")
     sign_out = anchors[len(anchors) - 1]
-    assert sign_out.text == config.auth["sign_out_text"]
+    if not sign_out.text == config.auth["sign_out_text"]:
+        raise Exception("Error in logout: Could not find sign out button")
     sign_out.click()
     print(driver.current_url)
     driver.close()
+    return True
 
 def login(driver: webdriver.Firefox):
-    # try:
+    success = False
     driver.get(config.auth["login_url"])
     # print("current url: " + driver.current_url)
     input_username = driver.find_element(By.ID, config.auth["username_element_id"])
@@ -33,10 +37,10 @@ def login(driver: webdriver.Firefox):
     input_password.clear()
     input_password.send_keys(secret.auth["password"])
     # print("input.password: " + input_password.get_attribute("value"))
-    assert input_username.get_attribute("value") == secret.auth["username"] and input_password.get_attribute("value") == secret.auth["password"]
+    # assert input_username.get_attribute("value") == secret.auth["username"] and input_password.get_attribute("value") == secret.auth["password"]
     driver.find_element(By.ID, config.auth["login_button_element_id"]).click()
-    assert config.auth["exception_page"] not in driver.current_url
-    return True
+    success = config.auth["exception_page"] not in driver.current_url
+    return success
 
 def getProductionInfo(cookies):
     print("Acquiring production info")
@@ -46,7 +50,8 @@ def getProductionInfo(cookies):
     for cookie in cookies:
         cookie_dict.update({cookie["name"]: cookie["value"]})
     response = post(url=endpoint, cookies=cookie_dict, headers=headers)
-    assert response.ok
+    if not response.ok:
+        raise Exception("Error retrieving production info: " + response.reason)
     print("Successfully acquired production info")
     return response.json()
 
@@ -60,10 +65,31 @@ def publishProductionInfo(data):
 
 if __name__ == "__main__":
     driver = setupDriver()
-    print("Logging in to " + config.auth["login_url"])
-    if login(driver):
-        print("Successfully logged in")
-        publishProductionInfo(getProductionInfo(driver.get_cookies()))
-        logout(driver)
-    else:
-        print("ERROR: Unable to login")
+    interval = config.exception_handling["initial_interval"]
+    max_attempts = config.exception_handling["max_attempts"]
+    num_attempts = 0
+    while(num_attempts != max_attempts):
+        num_attempts += 1
+        try:
+            print("Logging in to " + config.auth["login_url"])
+            if login(driver):
+                print("Successfully logged in")
+                json_data = getProductionInfo(driver.get_cookies())
+                publishProductionInfo(json_data)
+                if logout(driver):
+                    print("Successfully retrieved data. Exiting with success code 0.")
+                    sys_exit(0)
+                else:
+                    print("Failed to logout properly. Data was collected, but logout issues should be investigated. Exiting with success code 0.")
+                    sys_exit(0)
+            else:
+                raise Exception("Failed login")
+        except Exception as ex:
+            print("ERROR: " + str(type(ex)) + " " + str(ex))
+        print("Initiating backoff. Attempts remaining: " + str(max_attempts - num_attempts) + ". Will retry in " + str(interval) + " seconds.")
+        if num_attempts > 1:
+            interval = interval * config.exception_handling["backoff_multiplier"]
+        sleep(interval)
+    if num_attempts == max_attempts:
+        print("Unable to complete execution. Quitting with error code 1.")
+        sys_exit(1)

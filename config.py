@@ -51,3 +51,9 @@ response_fields = {
     "monitor_status": "meterFlag",
     "co2_saved": "co2"
 }
+
+exception_handling = { # these settings will retry over about 1 minute
+    "max_attempts": 7,
+    "initial_interval": 1,
+    "backoff_multiplier": 2
+}

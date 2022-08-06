@@ -72,11 +72,11 @@ def getProductionInfo(cookies):
 
 def publishProductionInfo(data):
     print("Publishing production info to " + secret.mqtt["hostname"] + ":" + str(secret.mqtt["port"]))
-    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_current_power"], payload=data[config.response_fields[config.mqtt["topic_current_power"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"])
-    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_energy_today"], payload=data[config.response_fields[config.mqtt["topic_energy_today"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"])
-    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_energy_lifetime"], payload=data[config.response_fields[config.mqtt["topic_energy_lifetime"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"])
-    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_monitor_status"], payload=data[config.response_fields[config.mqtt["topic_monitor_status"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"])
-    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_co2_saved"], payload=data[config.response_fields[config.mqtt["topic_co2_saved"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"])
+    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_current_power"], payload=data[config.response_fields[config.mqtt["topic_current_power"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"], retain=bool(config.mqtt["retainStatistics"]))
+    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_energy_today"], payload=data[config.response_fields[config.mqtt["topic_energy_today"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"], retain=bool(config.mqtt["retainStatistics"]))
+    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_energy_lifetime"], payload=data[config.response_fields[config.mqtt["topic_energy_lifetime"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"], retain=bool(config.mqtt["retainStatistics"]))
+    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_co2_saved"], payload=data[config.response_fields[config.mqtt["topic_co2_saved"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"], retain=bool(config.mqtt["retainStatistics"]))
+    publish.single(topic=config.mqtt["topic_prefix"] + config.mqtt["topic_monitor_status"], payload=data[config.response_fields[config.mqtt["topic_monitor_status"]]], qos=config.mqtt["qos"], hostname=secret.mqtt["hostname"], port=int(secret.mqtt["port"]), client_id=config.mqtt["client_id"], retain=bool(config.mqtt["retainMonitorStatus"]))
 
 if __name__ == "__main__":
     driver = setupDriver()

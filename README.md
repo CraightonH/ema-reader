@@ -11,6 +11,7 @@ All config variables are located in `config.py` with sections divided into separ
 | `mqtt` | MQTT Topics and non-sensitive config |
 | `response_fields` | Maps MQTT topics to api response fields |
 | `exception_handling` | Defines how the program will handle exceptions |
+| `logging` | Defines how logging should be configured |
 
 ### Secrets
 There are 2 methods to add secrets:

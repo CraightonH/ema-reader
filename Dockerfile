@@ -6,6 +6,7 @@ ENV CODEDIR=/app
 
 WORKDIR ${CODEDIR}
 
+
 ADD "https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux64.tar.gz" /tmp/geckodriver.tgz
 
 RUN tar zxf /tmp/geckodriver.tgz -C /usr/bin/ \
@@ -28,6 +29,6 @@ COPY --chown=${USER} requirements.txt .
 
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-COPY --chown=${USER} main.py config.py ${CODEDIR}/
+COPY --chown=${USER} app.py ${CODEDIR}/
 
-CMD python main.py
+CMD python app.py

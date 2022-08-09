@@ -35,12 +35,11 @@ A file named `secrets.py` can be created in the `/ema-reader` directory within t
 
 Example:
 ```
-auth = {
-  "username": "your username"
-  "password": "your password"
-}
-mqtt = {
-  "hostname": "mqtt hostname"
-  "port": 1883
-}
+auth:
+  username: "your username"
+  password: "your password"
+
+mqtt:
+  hostname: "mqtt hostname"
+  port: 1883
 ```

@@ -1,3 +1,5 @@
+from genericpath import isfile
+from ntpath import join
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
@@ -13,13 +15,13 @@ log_level_opt = {
     "error": logging.ERROR,
     "critical": logging.CRITICAL
 }
-
 try:
     config_dir = os.getenv('CONFIG_DIRECTORY_NAME') if os.getenv('CONFIG_DIRECTORY_NAME') is not None else 'config'
     config = {}
     for file in os.listdir(config_dir):
-        with open(f'{config_dir}/{file}', 'r') as config_stream:
-            config.update(yaml.safe_load(config_stream))
+        if os.path.isfile(os.path.join(config_dir, file)):
+            with open(f'{config_dir}/{file}', 'r') as config_stream:
+                config.update(yaml.safe_load(config_stream))
 except FileNotFoundError as err:
     print("Could not find config file. Please review documentation on config file location/format.")
     sys_exit(1)
@@ -35,8 +37,9 @@ try:
     secrets_dir = os.getenv('SECRETS_DIRECTORY_NAME') if os.getenv('SECRETS_DIRECTORY_NAME') is not None else 'secrets'
     secret = {}
     for file in os.listdir(secrets_dir):
-        with open(f'{secrets_dir}/{file}', 'r') as secret_stream:
-            secret.update(yaml.safe_load(secret_stream))
+        if os.path.isfile(os.path.join(secrets_dir, file)):
+            with open(f'{secrets_dir}/{file}', 'r') as secret_stream:
+                secret.update(yaml.safe_load(secret_stream))
 except FileNotFoundError:
     try:
         log.warning("Could not find secrets file. Using environment variables instead.")

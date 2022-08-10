@@ -1,5 +1,3 @@
-from genericpath import isfile
-from ntpath import join
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
@@ -7,49 +5,50 @@ from requests import post
 from time import sleep
 from sys import exit as sys_exit
 import paho.mqtt.publish as publish, traceback, os, yaml, logging
-log_level_opt = {
-    "debug": logging.DEBUG,
-    "info": logging.INFO,
-    "warning": logging.WARNING,
-    "warn": logging.WARNING,
-    "error": logging.ERROR,
-    "critical": logging.CRITICAL
-}
-try:
-    config_dir = os.getenv('CONFIG_DIRECTORY_NAME') if os.getenv('CONFIG_DIRECTORY_NAME') is not None else 'config'
-    config = {}
-    for file in os.listdir(config_dir):
-        if os.path.isfile(os.path.join(config_dir, file)):
-            with open(f'{config_dir}/{file}', 'r') as config_stream:
-                config.update(yaml.safe_load(config_stream))
-except FileNotFoundError as err:
-    print("Could not find config file. Please review documentation on config file location/format.")
-    sys_exit(1)
-
+config = {}
+secret = {}
 log = logging.getLogger("app.py")
-log.setLevel(log_level_opt[config["logging"]["level"].lower()])
-log_handle = logging.StreamHandler()
-log_handle.setLevel(log_level_opt[config["logging"]["level"].lower()])
-log_handle.setFormatter(logging.Formatter(config["logging"]["format"]))
-log.addHandler(log_handle)
-
-try:
-    secrets_dir = os.getenv('SECRETS_DIRECTORY_NAME') if os.getenv('SECRETS_DIRECTORY_NAME') is not None else 'secrets'
-    secret = {}
-    for file in os.listdir(secrets_dir):
-        if os.path.isfile(os.path.join(secrets_dir, file)):
-            with open(f'{secrets_dir}/{file}', 'r') as secret_stream:
-                secret.update(yaml.safe_load(secret_stream))
-except FileNotFoundError:
+def appSetup():
+    log_level_opt = {
+        "debug": logging.DEBUG,
+        "info": logging.INFO,
+        "warning": logging.WARNING,
+        "warn": logging.WARNING,
+        "error": logging.ERROR,
+        "critical": logging.CRITICAL
+    }
     try:
-        log.warning("Could not find secrets file. Using environment variables instead.")
-        secret["auth"]["username"] = os.environ["AUTH_USERNAME"]
-        secret["auth"]["password"] = os.environ["AUTH_PASSWORD"]
-        secret["mqtt"]["hostname"] = os.environ["MQTT_HOSTNAME"]
-        secret["mqtt"]["port"] = os.environ["MQTT_PORT"]
-    except KeyError as err:
-        log.error("Environment variable not found: " + str(err) + ". Quitting with non-zero exit code.")
+        config_dir = os.getenv('CONFIG_DIRECTORY_NAME') if os.getenv('CONFIG_DIRECTORY_NAME') is not None else 'config'
+        for file in os.listdir(config_dir):
+            if os.path.isfile(os.path.join(config_dir, file)):
+                with open(f'{config_dir}/{file}', 'r') as config_stream:
+                    config.update(yaml.safe_load(config_stream))
+    except FileNotFoundError as err:
+        print("Could not find config file. Please review documentation on config file location/format.")
         sys_exit(1)
+
+    log.setLevel(log_level_opt[config["logging"]["level"].lower()])
+    log_handle = logging.StreamHandler()
+    log_handle.setLevel(log_level_opt[config["logging"]["level"].lower()])
+    log_handle.setFormatter(logging.Formatter(config["logging"]["format"]))
+    log.addHandler(log_handle)
+
+    try:
+        secrets_dir = os.getenv('SECRETS_DIRECTORY_NAME') if os.getenv('SECRETS_DIRECTORY_NAME') is not None else 'secrets'
+        for file in os.listdir(secrets_dir):
+            if os.path.isfile(os.path.join(secrets_dir, file)):
+                with open(f'{secrets_dir}/{file}', 'r') as secret_stream:
+                    secret.update(yaml.safe_load(secret_stream))
+    except FileNotFoundError:
+        try:
+            log.warning("Could not find secrets file. Using environment variables instead.")
+            secret["auth"]["username"] = os.environ["AUTH_USERNAME"]
+            secret["auth"]["password"] = os.environ["AUTH_PASSWORD"]
+            secret["mqtt"]["hostname"] = os.environ["MQTT_HOSTNAME"]
+            secret["mqtt"]["port"] = os.environ["MQTT_PORT"]
+        except KeyError as err:
+            log.error("Environment variable not found: " + str(err) + ". Quitting with non-zero exit code.")
+            sys_exit(1)
 
 def setupDriver():
     options = Options()
@@ -111,6 +110,7 @@ def publishProductionInfo(data):
     publish.single(topic=config["mqtt"]["topic"]["prefix"] + config["mqtt"]["topic"]["monitor_status"], payload=data[config["response_fields"][config["mqtt"]["topic"]["monitor_status"]]], qos=config["mqtt"]["qos"], hostname=secret["mqtt"]["hostname"], port=int(secret["mqtt"]["port"]), client_id=config["mqtt"]["client_id"], retain=bool(config["mqtt"]["retainMonitorStatus"]))
 
 if __name__ == "__main__":
+    appSetup()
     driver = setupDriver()
     interval = config["exception_handling"]["initial_interval"]
     max_attempts = config["exception_handling"]["max_attempts"]

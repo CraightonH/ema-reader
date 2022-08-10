@@ -134,7 +134,7 @@ if __name__ == "__main__":
             trace = traceback.format_exc()
             log.error("(__main__) " + str(type(ex)) + " " + str(ex) + " " + str(trace))
         log.info("(__main__) Initiating backoff. Attempts remaining: " + str(max_attempts - num_attempts) + ". Will retry in " + str(interval) + " seconds.")
-        if num_attempts > 1:
+        if num_attempts > 0:
             interval = interval * config["exception_handling"]["backoff_multiplier"]
         sleep(interval)
     if num_attempts == max_attempts:

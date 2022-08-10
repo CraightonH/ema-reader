@@ -25,8 +25,8 @@ The following environment variables are supported:
 | `MQTT_HOSTNAME` | Target mqtt host |
 | `MQTT_PORT` | Target mqtt port |
 
-##### Python file
-All secret variables are located in a directory called `secret/`. This means you can manage secrets for each section in separate files, if desired, or just one large file. The file name doesn't matter. Any files in this directory will be assumed to be secrets in `yaml` format. 
+##### YAML
+All secret variables are located in a directory called `secrets/`. This means you can manage secrets for each section in separate files, if desired, or just one large file. The file name doesn't matter. Any files in this directory will be assumed to be secrets in `yaml` format. 
 | Name     | Value                                     |
 |----------|-------------------------------------------|
 | `auth.username` | Your login username |

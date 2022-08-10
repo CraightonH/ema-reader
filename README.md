@@ -1,4 +1,6 @@
 # EMA-Reader
+[![Pylint](https://github.com/CraightonH/ema-reader/actions/workflows/pylint.yml/badge.svg)](https://github.com/CraightonH/ema-reader/actions/workflows/pylint.yml)
+
 Acquires solar generation metrics from AP Systems EMA web app.
 
 ### Config

@@ -1,5 +1,6 @@
 # EMA-Reader
 [![Pylint](https://github.com/CraightonH/ema-reader/actions/workflows/pylint.yml/badge.svg?branch=main)](https://github.com/CraightonH/ema-reader/actions/workflows/pylint.yml)
+[![Docker Image CI](https://github.com/CraightonH/ema-reader/actions/workflows/docker-image.yml/badge.svg?branch=main)](https://github.com/CraightonH/ema-reader/actions/workflows/docker-image.yml)
 
 Acquires solar generation metrics from AP Systems EMA web app.
 

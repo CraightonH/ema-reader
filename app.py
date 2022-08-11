@@ -31,7 +31,7 @@ def app_setup():
     }
     try:
         config_dir = 'config'
-        if os.environ["CONFIG_DIRECTORY_NAME"] is not None:
+        if os.getenv("CONFIG_DIRECTORY_NAME") is not None:
             config_dir = os.environ["CONFIG_DIRECTORY_NAME"]
         for file in os.listdir(config_dir):
             if os.path.isfile(os.path.join(config_dir, file)):
@@ -50,7 +50,7 @@ def app_setup():
 
     try:
         secrets_dir = 'secrets'
-        if os.environ["SECRETS_DIRECTORY_NAME"] is not None:
+        if os.getenv("SECRETS_DIRECTORY_NAME") is not None:
             secrets_dir = os.environ["SECRETS_DIRECTORY_NAME"]
         for file in os.listdir(secrets_dir):
             if os.path.isfile(os.path.join(secrets_dir, file)):

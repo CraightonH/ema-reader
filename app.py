@@ -38,6 +38,7 @@ def app_setup():
                 with open(f'{config_dir}/{file}', 'r', encoding="utf-8") as config_stream:
                     config.update(yaml.safe_load(config_stream))
     except FileNotFoundError:
+        # pylint: disable=C0301
         print("Could not find config file. Please review documentation on config file location/format.")
         sys_exit(1)
 

@@ -126,12 +126,14 @@ def transform_panel_production_info(data):
     log.debug("(transform_panel_production_info) Found %s max panel data points.", str(panel_max_data_points))
     panel_list = data[config["api"]["endpoints"]["getViewPowerByViewAjax"]["response_keys"]["panels"]].split(config["api"]["endpoints"]["getViewPowerByViewAjax"]["delimiter"])
     panel_data = []
+    cnt = 0
     for i in range(panel_max_data_points, len(panel_list) - 1, panel_max_data_points):
-        panel_id = panel_list[i - panel_max_data_points]
+        cnt += 1
+        panel_id = cnt
         panel_value = panel_list[i - 1]
         panel_data.append({"id": panel_id, "value": panel_value})
         log.debug("(transform_panel_production_info) index: %i, id: %s, value: %s", i, panel_id, panel_value)
-    last_panel_id = panel_list[len(panel_list) - 1 - panel_max_data_points]
+    last_panel_id = cnt + 1
     las_panel_value = panel_list[len(panel_list) - 1]
     panel_data.append({"id": last_panel_id, "value": las_panel_value})
     log.debug("(transform_panel_production_info) id: %s, value: %s", last_panel_id, las_panel_value)
@@ -207,7 +209,7 @@ def setup_home_assistant_panel_sensors(data):
     index = 0
     for panel in data:
         index += 1
-        topic_prefix = panel_sensors_config["prefix"] + panel_sensors_config["component"] + "/" + panel["id"].replace("/", "_").replace("&", "_") + "/"
+        topic_prefix = panel_sensors_config["prefix"] + panel_sensors_config["component"] + "/" + str(panel["id"]) + "/"
         config_topic = topic_prefix + panel_sensors_config["config_suffix"]
         state_topic = topic_prefix + panel_sensors_config["state_suffix"]
         sensor_payload = {
@@ -236,7 +238,7 @@ def publish_panel_production_info(data):
     index = 0
     for panel in data:
         index += 1
-        topic_prefix = panel_sensors_config["prefix"] + panel_sensors_config["component"] + "/" + panel["id"].replace("/", "_").replace("&", "_") + "/"
+        topic_prefix = panel_sensors_config["prefix"] + panel_sensors_config["component"] + "/" + str(panel["id"]) + "/"
         state_topic = topic_prefix + panel_sensors_config["state_suffix"]
         sensor_payload = {
             "value": panel["value"]

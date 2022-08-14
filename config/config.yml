@@ -86,6 +86,6 @@ mqtt:
       retain: true    
 
 logging:
-  level: "debug"
+  level: "info"
   format: '%(asctime)s - %(levelname)s - [%(name)s] %(message)s'
   redact_sensitive_fields: true

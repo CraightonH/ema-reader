@@ -154,7 +154,6 @@ def get_panel_production_info(cookies):
     log.debug("(get_panel_production_info) Calling %s", endpoint)
     response = post(url=endpoint, cookies=cookie_dict, headers=headers, data=body)
     log.debug("(get_panel_production_info) Response: %s", response.status_code)
-    print(response.json())
     if not response.ok:
         raise Exception("Error retrieving panel production info: " + str(response.status_code))
     log.info("(get_panel_production_info) Successfully acquired panel production info")

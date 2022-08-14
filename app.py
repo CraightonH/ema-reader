@@ -209,12 +209,13 @@ def setup_home_assistant_panel_sensors(data):
     index = 0
     for panel in data:
         index += 1
-        topic_prefix = panel_sensors_config["prefix"] + panel_sensors_config["component"] + "/" + str(panel["id"]) + "/"
+        topic_prefix = panel_sensors_config["prefix"] + panel_sensors_config["component"] + "/" + panel_sensors_config["unique_id"] + "_" + str(panel["id"]) + "/"
         config_topic = topic_prefix + panel_sensors_config["config_suffix"]
         state_topic = topic_prefix + panel_sensors_config["state_suffix"]
         sensor_payload = {
             "device_class": panel_sensors_config["device_class"],
             "name": f'{panel_sensors_config["name"]} {index}',
+            "unique_id": f'{panel_sensors_config["unique_id"]}_{index}',
             "state_topic": state_topic,
             "unit_of_measurement": panel_sensors_config["unit_of_measurement"],
             "value_template": panel_sensors_config["value_template"]
@@ -238,13 +239,13 @@ def publish_panel_production_info(data):
     index = 0
     for panel in data:
         index += 1
-        topic_prefix = panel_sensors_config["prefix"] + panel_sensors_config["component"] + "/" + str(panel["id"]) + "/"
+        topic_prefix = panel_sensors_config["prefix"] + panel_sensors_config["component"] + "/" + panel_sensors_config["unique_id"] + "_" + str(panel["id"]) + "/"
         state_topic = topic_prefix + panel_sensors_config["state_suffix"]
         sensor_payload = {
             "value": panel["value"]
         }
         serialized_payload = json.dumps(sensor_payload)
-        log.debug("(publish_panel_production_info) Sensor payload: %s", sensor_payload)
+        log.debug("(publish_panel_production_info) Sensor topic: %s | payload: %s", state_topic, sensor_payload)
         publish.single(topic=state_topic, payload=serialized_payload, qos=panel_sensors_config["qos"], retain=panel_sensors_config["retain"], hostname=hostname, port=port, client_id=client_id)
 
 if __name__ == "__main__":

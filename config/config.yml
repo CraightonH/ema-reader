@@ -64,6 +64,7 @@ mqtt:
       unit_of_measurement: W
       value_template: "{{ value_json.value }}"
       name: "Solar Panel"
+      unique_id: "solar_panel"
       retain: true
       qos: 0
   client_id: "ema-reader"
@@ -86,6 +87,6 @@ mqtt:
       retain: true    
 
 logging:
-  level: "info"
+  level: "debug"
   format: '%(asctime)s - %(levelname)s - [%(name)s] %(message)s'
   redact_sensitive_fields: true

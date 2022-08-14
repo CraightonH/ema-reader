@@ -1,6 +1,10 @@
 """
 Logs into EMA web app and grabs metrics from EMA's API
 """
+from dataclasses import replace
+from datetime import date
+import json
+import re
 from time import sleep
 import traceback
 import os
@@ -114,13 +118,58 @@ def login(driver: webdriver.Firefox):
     success = config["auth"]["exception_page"] not in driver.current_url
     return success
 
+def transform_panel_production_info(data):
+    """
+    Reduces data to pieces we care about
+    """
+    # pylint: disable=C0301
+    time_csv = data[config["api"]["endpoints"]["getViewPowerByViewAjax"]["response_keys"]["time"]]
+    panel_max_data_points = len(time_csv.split(config["api"]["endpoints"]["getViewPowerByViewAjax"]["delimiter"])) - 1 # get total number of timestamps
+    log.debug("(transform_panel_production_info) Found %s max panel data points.", str(panel_max_data_points))
+    panel_list = data[config["api"]["endpoints"]["getViewPowerByViewAjax"]["response_keys"]["panels"]].split(config["api"]["endpoints"]["getViewPowerByViewAjax"]["delimiter"])
+    panel_data = []
+    for i in range(panel_max_data_points, len(panel_list) - 1, panel_max_data_points):
+        panel_id = panel_list[i - panel_max_data_points]
+        panel_value = panel_list[i - 1]
+        panel_data.append({"id": panel_id, "value": panel_value})
+        log.debug("(transform_panel_production_info) index: %i, id: %s, value: %s", i, panel_id, panel_value)
+    last_panel_id = panel_list[len(panel_list) - 1 - panel_max_data_points]
+    las_panel_value = panel_list[len(panel_list) - 1]
+    panel_data.append({"id": last_panel_id, "value": las_panel_value})
+    log.debug("(transform_panel_production_info) id: %s, value: %s", last_panel_id, las_panel_value)
+    log.info("(transform_panel_production_info) Collected panel data")
+    log.debug("Data:\n%s", panel_data)
+    return panel_data
+
+def get_panel_production_info(cookies):
+    """
+    Requests data from EMA getViewPowerByViewAjax API endpoint
+    """
+    log.info("(get_panel_production_info) Acquiring panel production info")
+    headers = config["api"]["headers"]
+    api_date = date.today().strftime("%Y%m%d")
+    endpoint = config["api"]["endpoints"]["getViewPowerByViewAjax"]["uri"]
+    body = config["api"]["endpoints"]["getViewPowerByViewAjax"]["body"] + api_date
+    cookie_dict = {}
+    for cookie in cookies:
+        cookie_dict.update({cookie["name"]: cookie["value"]})
+    log.debug("(get_panel_production_info) Calling %s", endpoint)
+    response = post(url=endpoint, cookies=cookie_dict, headers=headers, data=body)
+    log.debug("(get_panel_production_info) Response: %s", response.status_code)
+    print(response.json())
+    if not response.ok:
+        raise Exception("Error retrieving panel production info: " + str(response.status_code))
+    log.info("(get_panel_production_info) Successfully acquired panel production info")
+    transformed_data = transform_panel_production_info(response.json())
+    return transformed_data
+
 def get_production_info(cookies):
     """
     Requests data from EMA getProductionInfo API endpoint
     """
     log.info("(get_production_info) Acquiring production info")
     headers = config["api"]["headers"]
-    endpoint = config["api"]["endpoints"]["getProductionInfo"]
+    endpoint = config["api"]["endpoints"]["getProductionInfo"]["uri"]
     cookie_dict = {}
     for cookie in cookies:
         cookie_dict.update({cookie["name"]: cookie["value"]})
@@ -147,6 +196,58 @@ def publish_production_info(data):
         payload = data[config["response_fields"][topic["name"]]]
         publish.single(topic=name, payload=payload, qos=qos, retain=retain, hostname=hostname, port=port, client_id=client_id)
 
+def setup_home_assistant_panel_sensors(data):
+    """
+    Setup panel sensors in Home Assistant via MQTT
+    https://www.home-assistant.io/docs/mqtt/discovery/#sensors
+    """
+    # pylint: disable=C0301
+    hostname = secret["mqtt"]["hostname"]
+    port = int(secret["mqtt"]["port"])
+    log.info("(setup_home_assistant_sensors) Configuring panel sensors in mqtt broker at %s:%s", hostname, port)
+    client_id = config["mqtt"]["client_id"]
+    panel_sensors_config = config["mqtt"]["home_assistant"]["panel_sensors"]
+    index = 0
+    for panel in data:
+        index += 1
+        topic_prefix = panel_sensors_config["prefix"] + panel_sensors_config["component"] + "/" + panel["id"].replace("/", "_").replace("&", "_") + "/"
+        config_topic = topic_prefix + panel_sensors_config["config_suffix"]
+        state_topic = topic_prefix + panel_sensors_config["state_suffix"]
+        sensor_payload = {
+            "device_class": panel_sensors_config["device_class"],
+            "name": f'{panel_sensors_config["name"]} {index}',
+            "state_topic": state_topic,
+            "unit_of_measurement": panel_sensors_config["unit_of_measurement"],
+            "value_template": panel_sensors_config["value_template"]
+        }
+        serialized_payload = json.dumps(sensor_payload)
+        log.debug("(setup_home_assistant_panel_sensors) Sensor payload: %s", sensor_payload)
+        publish.single(topic=config_topic, payload=serialized_payload, qos=panel_sensors_config["qos"], retain=panel_sensors_config["retain"], hostname=hostname, port=port, client_id=client_id)
+
+def publish_panel_production_info(data):
+    """
+    Send panel data to MQTT broker
+    """
+    # pylint: disable=C0301
+    if config["mqtt"]["create_home_assistant_sensors"]:
+        setup_home_assistant_panel_sensors(data)
+    hostname = secret["mqtt"]["hostname"]
+    port = int(secret["mqtt"]["port"])
+    log.info("(publish_panel_production_info) Publishing panel data to mqtt broker at %s:%s", hostname, port)
+    client_id = config["mqtt"]["client_id"]
+    panel_sensors_config = config["mqtt"]["home_assistant"]["panel_sensors"]
+    index = 0
+    for panel in data:
+        index += 1
+        topic_prefix = panel_sensors_config["prefix"] + panel_sensors_config["component"] + "/" + panel["id"].replace("/", "_").replace("&", "_") + "/"
+        state_topic = topic_prefix + panel_sensors_config["state_suffix"]
+        sensor_payload = {
+            "value": panel["value"]
+        }
+        serialized_payload = json.dumps(sensor_payload)
+        log.debug("(publish_panel_production_info) Sensor payload: %s", sensor_payload)
+        publish.single(topic=state_topic, payload=serialized_payload, qos=panel_sensors_config["qos"], retain=panel_sensors_config["retain"], hostname=hostname, port=port, client_id=client_id)
+
 if __name__ == "__main__":
     app_setup()
     web_driver = setup_driver()
@@ -159,8 +260,10 @@ if __name__ == "__main__":
         try:
             if login(web_driver):
                 log.info("(__main__) Successfully logged in")
-                json_data = get_production_info(web_driver.get_cookies())
-                publish_production_info(json_data)
+                system_production_data = get_production_info(web_driver.get_cookies())
+                publish_production_info(system_production_data)
+                panel_production_data = get_panel_production_info(web_driver.get_cookies())
+                publish_panel_production_info(panel_production_data)
                 if logout(web_driver):
                     log.info("(__main__) Successfully retrieved data. Exiting with success code 0.")
                     sys_exit(0)

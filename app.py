@@ -1,10 +1,8 @@
 """
 Logs into EMA web app and grabs metrics from EMA's API
 """
-from dataclasses import replace
 from datetime import date
 import json
-import re
 from time import sleep
 import traceback
 import os

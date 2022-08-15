@@ -53,8 +53,23 @@ exception_handling: # these settings will retry over about 1 minute
   backoff_multiplier: 2
 
 mqtt:
+  client_id: "ema-reader"
   create_home_assistant_sensors: true
   home_assistant:
+    system_sensor:
+      prefix: "homeassistant/"
+      component: "sensor"
+      config_suffix: "config"
+      state_suffix: "state"
+      attributes_suffix: "attributes"
+      device_class: power
+      unit_of_measurement: W
+      value_template: "{{ value_json.value | int }}"
+      qos: 0
+      retain: true
+      name: "Solar System"
+      unique_id: "solar_system"
+      state_class: "measurement"
     panel_sensors:
       prefix: "homeassistant/"
       component: "sensor"
@@ -67,7 +82,7 @@ mqtt:
       unique_id: "solar_panel"
       retain: true
       qos: 0
-  client_id: "ema-reader"
+      state_class: "measurement"
   topic_prefix: "homeassistant/energy/solar/"
   topics:
     - name: "power_current"

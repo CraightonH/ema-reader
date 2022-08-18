@@ -70,6 +70,8 @@ mqtt:
       name: "Solar System"
       unique_id: "solar_system"
       state_class: "measurement"
+      monitor_status_map:
+        0: "Normal"
     panel_sensors:
       prefix: "homeassistant/"
       component: "sensor"

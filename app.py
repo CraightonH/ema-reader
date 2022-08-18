@@ -223,27 +223,20 @@ def publish_production_info(data):
     state_topic = topic_prefix + system_sensor_config["state_suffix"]
     attributes_topic = topic_prefix + system_sensor_config["attributes_suffix"]
     state_payload = {
-        "value": data[config["response_fields"]["power_current"]]
+        "value": f'{float(data[config["response_fields"]["power_current"]]):.2f}'
     }
     log.debug("(publish_production_info) state_payload: %s", state_payload)
     attributes_payload = {
-        "energy_today": f'{data[config["response_fields"]["energy_today"]]:.2f}',
-        "energy_lifetime": f'{data[config["response_fields"]["energy_lifetime"]]:.2f}',
-        "monitor_status": data[config["response_fields"]["monitor_status"]],
-        "co2_saved": f'{data[config["response_fields"]["co2_saved"]]:.2f}'
+        "energy_today": f'{float(data[config["response_fields"]["energy_today"]]):.2f}',
+        "energy_lifetime": f'{float(data[config["response_fields"]["energy_lifetime"]]):.2f}',
+        "monitor_status": system_sensor_config["monitor_status_map"][data[config["response_fields"]["monitor_status"]]],
+        "co2_saved": f'{float(data[config["response_fields"]["co2_saved"]]):.2f}'
     }
     log.debug("(publish_production_info) attributes_payload: %s", attributes_payload)
     serialized_payload = json.dumps(state_payload)
     publish.single(topic=state_topic, payload=serialized_payload, qos=system_sensor_config["qos"], retain=system_sensor_config["retain"], hostname=hostname, port=port, client_id=client_id)
     serialized_payload = json.dumps(attributes_payload)
     publish.single(topic=attributes_topic, payload=serialized_payload, qos=system_sensor_config["qos"], retain=system_sensor_config["retain"], hostname=hostname, port=port, client_id=client_id)
-    # for topic in config["mqtt"]["topics"]:
-    #     name = topic_prefix + topic["name"]
-    #     qos = topic["qos"]
-    #     retain = bool(topic["retain"])
-    #     payload = data[config["response_fields"][topic["name"]]]
-        # publish.single(topic=name, payload=payload, qos=qos, retain=retain, hostname=hostname, port=port, client_id=client_id)
-
 
 def setup_home_assistant_panel_sensors(data):
     """

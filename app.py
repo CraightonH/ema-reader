@@ -145,6 +145,7 @@ def get_panel_production_info(cookies):
     """
     Requests data from EMA getViewPowerByViewAjax API endpoint
     """
+    # pylint: disable=C0301
     log.info("(get_panel_production_info) Acquiring panel production info")
     headers = config["api"]["headers"]
     api_date = date.today().strftime("%Y%m%d")
@@ -154,7 +155,7 @@ def get_panel_production_info(cookies):
     for cookie in cookies:
         cookie_dict.update({cookie["name"]: cookie["value"]})
     log.debug("(get_panel_production_info) Calling %s", endpoint)
-    response = post(url=endpoint, cookies=cookie_dict, headers=headers, data=body)
+    response = post(url=endpoint, cookies=cookie_dict, headers=headers, data=body, timeout=config["api"]["timeout"])
     log.debug("(get_panel_production_info) Response: %s", response.status_code)
     if not response.ok:
         raise Exception("Error retrieving panel production info: " + str(response.status_code))
@@ -166,13 +167,14 @@ def get_production_info(cookies):
     """
     Requests data from EMA getProductionInfo API endpoint
     """
+    # pylint: disable=C0301
     log.info("(get_production_info) Acquiring production info")
     headers = config["api"]["headers"]
     endpoint = config["api"]["endpoints"]["getProductionInfo"]["uri"]
     cookie_dict = {}
     for cookie in cookies:
         cookie_dict.update({cookie["name"]: cookie["value"]})
-    response = post(url=endpoint, cookies=cookie_dict, headers=headers)
+    response = post(url=endpoint, cookies=cookie_dict, headers=headers, timeout=config["api"]["timeout"])
     if not response.ok:
         raise Exception("Error retrieving production info: " + response.reason)
     log.info("(get_production_info) Successfully acquired production info")

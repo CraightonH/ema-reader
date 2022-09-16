@@ -162,35 +162,6 @@ def get_panel_production_info(cookies):
     transformed_data = transform_panel_production_info(response.json())
     return transformed_data
 
-def setup_home_assistant_system_sensor():
-    """
-    Setup panel sensors in Home Assistant via MQTT
-    https://www.home-assistant.io/docs/mqtt/discovery/#sensors
-    """
-    # pylint: disable=C0301
-    hostname = secret["mqtt"]["hostname"]
-    port = int(secret["mqtt"]["port"])
-    log.info("(setup_home_assistant_system_sensor) Configuring solar system sensor in mqtt broker at %s:%s", hostname, port)
-    client_id = config["mqtt"]["client_id"]
-    system_sensor_config = config["mqtt"]["home_assistant"]["system_sensor"]
-    topic_prefix = system_sensor_config["prefix"] + system_sensor_config["component"] + "/" + system_sensor_config["unique_id"] + "/"
-    config_topic = topic_prefix + system_sensor_config["config_suffix"]
-    state_topic = topic_prefix + system_sensor_config["state_suffix"]
-    attributes_topic = topic_prefix + system_sensor_config["attributes_suffix"]
-    sensor_payload = {
-        "device_class": system_sensor_config["device_class"],
-        "name": f'{system_sensor_config["name"]}',
-        "unique_id": f'{system_sensor_config["unique_id"]}',
-        "state_topic": state_topic,
-        "json_attributes_topic": attributes_topic,
-        "unit_of_measurement": system_sensor_config["unit_of_measurement"],
-        "value_template": system_sensor_config["value_template"],
-        "state_class": system_sensor_config["state_class"]
-    }
-    serialized_payload = json.dumps(sensor_payload)
-    log.debug("(setup_home_assistant_system_sensor) Sensor payload: %s", sensor_payload)
-    publish.single(topic=config_topic, payload=serialized_payload, qos=system_sensor_config["qos"], retain=system_sensor_config["retain"], hostname=hostname, port=port, client_id=client_id)
-
 def get_production_info(cookies):
     """
     Requests data from EMA getProductionInfo API endpoint
@@ -211,39 +182,18 @@ def publish_production_info(data):
     """
     Send data to MQTT broker
     """
-    setup_home_assistant_system_sensor()
     hostname = secret["mqtt"]["hostname"]
     port = int(secret["mqtt"]["port"])
     # pylint: disable=C0301
     log.info("(publish_production_info) Publishing production info to mqtt broker at %s:%s", hostname, port)
     topic_prefix = config["mqtt"]["topic_prefix"]
     client_id = config["mqtt"]["client_id"]
-    system_sensor_config = config["mqtt"]["home_assistant"]["system_sensor"]
-    topic_prefix = system_sensor_config["prefix"] + system_sensor_config["component"] + "/" + system_sensor_config["unique_id"] + "/"
-    state_topic = topic_prefix + system_sensor_config["state_suffix"]
-    attributes_topic = topic_prefix + system_sensor_config["attributes_suffix"]
-    state_payload = {
-        "value": data[config["response_fields"]["power_current"]]
-    }
-    log.debug("(publish_production_info) state_payload: %s", state_payload)
-    attributes_payload = {
-        "energy_today": f'{data[config["response_fields"]["energy_today"]]:.2f}',
-        "energy_lifetime": f'{data[config["response_fields"]["energy_lifetime"]]:.2f}',
-        "monitor_status": data[config["response_fields"]["monitor_status"]],
-        "co2_saved": f'{data[config["response_fields"]["co2_saved"]]:.2f}'
-    }
-    log.debug("(publish_production_info) attributes_payload: %s", attributes_payload)
-    serialized_payload = json.dumps(state_payload)
-    publish.single(topic=state_topic, payload=serialized_payload, qos=system_sensor_config["qos"], retain=system_sensor_config["retain"], hostname=hostname, port=port, client_id=client_id)
-    serialized_payload = json.dumps(attributes_payload)
-    publish.single(topic=attributes_topic, payload=serialized_payload, qos=system_sensor_config["qos"], retain=system_sensor_config["retain"], hostname=hostname, port=port, client_id=client_id)
-    # for topic in config["mqtt"]["topics"]:
-    #     name = topic_prefix + topic["name"]
-    #     qos = topic["qos"]
-    #     retain = bool(topic["retain"])
-    #     payload = data[config["response_fields"][topic["name"]]]
-        # publish.single(topic=name, payload=payload, qos=qos, retain=retain, hostname=hostname, port=port, client_id=client_id)
-
+    for topic in config["mqtt"]["topics"]:
+        name = topic_prefix + topic["name"]
+        qos = topic["qos"]
+        retain = bool(topic["retain"])
+        payload = data[config["response_fields"][topic["name"]]]
+        publish.single(topic=name, payload=payload, qos=qos, retain=retain, hostname=hostname, port=port, client_id=client_id)
 
 def setup_home_assistant_panel_sensors(data):
     """
@@ -268,8 +218,7 @@ def setup_home_assistant_panel_sensors(data):
             "unique_id": f'{panel_sensors_config["unique_id"]}_{index}',
             "state_topic": state_topic,
             "unit_of_measurement": panel_sensors_config["unit_of_measurement"],
-            "value_template": panel_sensors_config["value_template"],
-            "state_class": panel_sensors_config["state_class"]
+            "value_template": panel_sensors_config["value_template"]
         }
         serialized_payload = json.dumps(sensor_payload)
         log.debug("(setup_home_assistant_panel_sensors) Sensor payload: %s", sensor_payload)

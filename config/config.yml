@@ -2,7 +2,6 @@
 webdriver:
   driver_opts:
     - "--headless"
-
 auth:
   login_url: "https://www.apsystemsema.com/ema/index.action"
   username_element_id: "username"
@@ -10,10 +9,10 @@ auth:
   login_button_element_id: "Login"
   sign_out_text: "Sign out"
   exception_page: "ema/exceptionIndex.action"
-
 api:
   timeout: 30
   headers: 
+    authority: "www.apsystemsema.com"
     accept: "application/json, text/javascript, */*; q=0.01"
     accept-language: "en-US,en;q=0.9"
     cache-control: "no-cache"
@@ -27,6 +26,7 @@ api:
     x-requested-with: "XMLHttpRequest"
     Referer: "https://www.apsystemsema.com/ema/security/optmainmenu/intoLargeDashboard.action"
     Referrer-Policy: "strict-origin-when-cross-origin"
+    cookie: JSESSIONID=6623226b-f8b5-42d3-87d1-2b57c8807df9; page=1; loginPageUrl=newLogin; loginActionUrl=index; jessionId=6623226b-f8b5-42d3-87d1-2b57c8807df9; userId=2c9f934a81ff8f0501821d822114610b; page_logo=logo-apsa.png; noticeFlag=1; privateFlag=1; userGrade=0; logoTitle=logo.png; logoutActionUrl=logoutEMA; cssFile=opt.aps.head; twflag=false; language=en_US
   endpoints:
     getProductionInfo: 
       uri: "https://www.apsystemsema.com/ema/ajax/getDashboardApiAjax/getDashboardProductionInfoAjax"
@@ -39,19 +39,16 @@ api:
         panels: "detail"
         total_power: "power"
         time: "time"
-
 response_fields:
   power_current: "lastPower"
   energy_today: "today"
   energy_lifetime: "lifetime"
   monitor_status: "meterFlag"
   co2_saved: "co2"
-
 exception_handling: # these settings will retry over about 1 minute
-  max_attempts: 7
+  max_attempts: 1
   initial_interval: 1
   backoff_multiplier: 2
-
 mqtt:
   create_home_assistant_sensors: true
   home_assistant:
@@ -62,7 +59,7 @@ mqtt:
       state_suffix: "state"
       device_class: power
       unit_of_measurement: W
-      value_template: "{{ value_json.value }}"
+      value_template: "{{ value_json.value | int }}"
       name: "Solar Panel"
       unique_id: "solar_panel"
       retain: true
@@ -85,7 +82,6 @@ mqtt:
     - name: "co2_saved"
       qos: 0
       retain: true    
-
 logging:
   level: "debug"
   format: '%(asctime)s - %(levelname)s - [%(name)s] %(message)s'

@@ -116,6 +116,19 @@ def login(driver: webdriver.Firefox):
     success = config["auth"]["exception_page"] not in driver.current_url
     return success
 
+def build_cookie_header_string(cookies):
+    """
+    Builds header string from cookie list
+    """
+    header_string = ""
+    index = 0
+    for cookie in cookies:
+        if index > 0:
+            header_string += "; "
+        header_string += cookie["name"]+ "=" + cookie["value"]
+        index += 1
+    return header_string
+
 def transform_panel_production_info(data):
     """
     Reduces data to pieces we care about
@@ -171,10 +184,18 @@ def get_production_info(cookies):
     log.info("(get_production_info) Acquiring production info")
     headers = config["api"]["headers"]
     endpoint = config["api"]["endpoints"]["getProductionInfo"]["uri"]
+    cookie_header = build_cookie_header_string(cookies)
+    headers["cookie"] = cookie_header
     cookie_dict = {}
     for cookie in cookies:
         cookie_dict.update({cookie["name"]: cookie["value"]})
-    response = post(url=endpoint, cookies=cookie_dict, headers=headers, timeout=config["api"]["timeout"])
+    log.debug("(get_production_info) cookie_dict: " + str(cookie_dict))
+    log.debug("(get_production_info) endpoint: " + str(endpoint))
+    log.debug("(get_production_info) cookies: " + str(cookies))
+    log.debug("(get_production_info) headers: " + str(headers))
+    log.debug("(get_production_info) timeout: " + str(config["api"]["timeout"]))
+    log.debug("(get_production_info) cookie_header: " + str(cookie_header))
+    response = post(url=endpoint, headers=headers, timeout=config["api"]["timeout"])
     if not response.ok:
         raise Exception("Error retrieving production info: " + response.reason)
     log.info("(get_production_info) Successfully acquired production info")
